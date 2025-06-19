@@ -33,8 +33,11 @@ jobs:
           for contract in contracts/*.yaml; do
             name=$(basename "$contract" .yaml)
             echo "🧪 Running datacontract test on $contract"
-            python -m datacontract test "$contract" --junit "reports/${name}.xml" || true
+            python -m datacontract test "$contract" --junit "reports/${name}.xml" || echo "⚠️ Validation failed for $contract"
           done
+
+          echo "📂 Listing report files:"
+          ls -l reports/
 
       - name: Upload test report artifacts
         uses: actions/upload-artifact@v4
