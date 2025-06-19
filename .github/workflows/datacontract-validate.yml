@@ -25,11 +25,27 @@ jobs:
           python-version: '3.10'
 
       - name: Install datacontract-cli
-        run: pip install datacontract-cli
+        run: pip install --upgrade datacontract-cli
 
-      - name: Run data contract tests
+      - name: Run data contract tests and generate JUnit reports
         run: |
-          for contract in data/*.yaml; do
+          mkdir -p reports
+          for contract in contracts/*.yaml; do
+            name=$(basename "$contract" .yaml)
             echo "🧪 Running datacontract test on $contract"
-            datacontract test "$contract"
+            python -m datacontract test "$contract" --junit "reports/${name}.xml" || true
           done
+
+      - name: Upload test report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: datacontract-reports
+          path: reports/
+
+      - name: Display test results in PR
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: datacontract
+          path: reports/*.xml
+          reporter: java-junit
