@@ -1,6 +1,15 @@
-name: Validate Data Contract (Debug Trigger)
+name: Validate Data Contract
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'data/**/*.csv'
+      - 'contracts/**/*.yaml'
+  pull_request:
+    paths:
+      - 'data/**/*.csv'
+      - 'contracts/**/*.yaml'
+  workflow_dispatch:
 
 jobs:
   echo-test:
