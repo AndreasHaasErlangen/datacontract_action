@@ -1,36 +1,9 @@
-name: Validate Data Contract
+name: Validate Data Contract (Debug Trigger)
 
-on:
-  push:
-  pull_request:
-
-    paths:
-      - 'data/**/*.csv'
-      - 'contracts/**/*.yaml'
-  pull_request:
-    paths:
-      - 'data/**/*.csv'
-      - 'contracts/**/*.yaml'
+on: [push, pull_request]
 
 jobs:
-  validate:
+  echo-test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install datacontract-cli
-        run: pip install datacontract-cli
-
-      - name: Run contract tests
-        run: |
-          for contract in contracts/*.yaml; do
-            echo "## Testing $contract"
-            datacontract test "$contract"
-          done
+      - run: echo "✅ Hello from the workflow!"
