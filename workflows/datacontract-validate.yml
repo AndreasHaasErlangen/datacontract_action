@@ -2,6 +2,8 @@ name: Validate Data Contract
 
 on:
   push:
+  pull_request:
+
     paths:
       - 'data/**/*.csv'
       - 'contracts/**/*.yaml'
