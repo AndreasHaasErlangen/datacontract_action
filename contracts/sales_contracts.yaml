@@ -1,4 +1,4 @@
-dataContractSpecification: 0.1.0
+dataContractSpecification: 1.1.0
 id: sales-data-contract
 info:
   title: Sales Data Contract
