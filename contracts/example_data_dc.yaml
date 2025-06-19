@@ -1,0 +1,33 @@
+dataContractSpecification: 1.1.0
+id: my-data-contract-id
+info:
+  title: My Data Contract
+  version: 0.0.1
+servers:
+  production:
+    type: local
+    format: csv
+    path: data/example_data.csv
+    delimiter: ','
+models:
+  example_data:
+    description: Csv file with encoding ascii
+    type: table
+    fields:
+      id:
+        type: integer
+        required: true
+        unique: true
+      name:
+        type: string
+        required: true
+        minLength: 1
+      age:
+        type: integer
+        required: true
+        min: 0
+        max: 150
+      email:
+        type: string
+        required: true
+        format: email
