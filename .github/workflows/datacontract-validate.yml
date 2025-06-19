@@ -29,7 +29,7 @@ jobs:
 
       - name: Run data contract tests
         run: |
-          for contract in contracts/*.yaml; do
+          for contract in data/*.yaml; do
             echo "🧪 Running datacontract test on $contract"
             datacontract test "$contract"
           done
