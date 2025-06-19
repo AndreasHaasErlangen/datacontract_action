@@ -1,0 +1,17 @@
+version: 1
+name: sales_contract
+description: A simple contract for sales data
+
+source: "../data/sales.csv"
+
+schema:
+  type: object
+  properties:
+    id:
+      type: integer
+    amount:
+      type: number
+    date:
+      type: string
+      format: date
+  required: [id, amount, date]
