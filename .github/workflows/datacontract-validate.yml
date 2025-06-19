@@ -30,7 +30,7 @@ jobs:
       - name: Run data contract tests and generate JUnit reports
         run: |
           mkdir -p reports
-          for contract in contracts/*.yaml; do
+          for contract in data/*.yaml; do
             name=$(basename "$contract" .yaml)
             echo "🧪 Running datacontract test on $contract"
             python -m datacontract test "$contract" --junit "reports/${name}.xml" || echo "⚠️ Validation failed for $contract"
