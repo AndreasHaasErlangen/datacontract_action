@@ -33,23 +33,7 @@ jobs:
           for contract in data/*.yaml; do
             name=$(basename "$contract" .yaml)
             echo "🧪 Running datacontract test on $contract"
-            datacontract test "$contract" --junit "reports/${name}.xml"
+            datacontract test "$contract"
           done
 
-          echo "📂 Listing report files:"
-          ls -l reports/
 
-      - name: Upload test report artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: datacontract-reports
-          path: reports/
-
-      - name: Display test results in PR
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: datacontract
-          path: reports/*.xml
-          reporter: java-junit
-          check-name: datacontract
