@@ -1,17 +1,20 @@
-version: 1
-name: sales_contract
-description: A simple contract for sales data
+dataContractSpecification: 0.1.0
+id: sales-data-contract
+info:
+  title: Sales Data Contract
+  version: "1.0.0"
 
-source: "../data/sales.csv"
-
-schema:
-  type: object
-  properties:
-    id:
-      type: integer
-    amount:
-      type: number
-    date:
-      type: string
-      format: date
-  required: [id, amount, date]
+contracts:
+  - entity: sales
+    file: data/sales.csv
+    type: csv
+    expectations:
+      columns:
+        - name: date
+          type: string
+        - name: item
+          type: string
+        - name: quantity
+          type: integer
+        - name: price
+          type: number
