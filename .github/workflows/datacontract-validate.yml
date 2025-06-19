@@ -33,7 +33,7 @@ jobs:
           for contract in data/*.yaml; do
             name=$(basename "$contract" .yaml)
             echo "🧪 Running datacontract test on $contract"
-            python -m datacontract test "$contract" --junit "reports/${name}.xml" || echo "⚠️ Validation failed for $contract"
+            datacontract test "$contract"
           done
 
           echo "📂 Listing report files:"
