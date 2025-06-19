@@ -12,8 +12,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  echo-test:
+  validate:
     runs-on: ubuntu-latest
+
     steps:
-      - run: echo "✅ Hello from the workflow!"
-      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install datacontract-cli
+        run: pip install datacontract-cli
+
+      - name: Run data contract tests
+        run: |
+          for contract in contracts/*.yaml; do
+            echo "🧪 Running datacontract test on $contract"
+            datacontract test "$contract"
+          done
