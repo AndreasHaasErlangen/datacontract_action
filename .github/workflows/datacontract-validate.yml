@@ -20,13 +20,29 @@ jobs:
       - name: 📦 Checkout repository
         uses: actions/checkout@v4
 
-      - name: ✅ Run DataContract validation
-        uses: datacontract/datacontract-action@main
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
         with:
-          contracts: data/*.yaml
-          data: data/*.csv
+          python-version: '3.10'
 
-      - name: 📤 Upload validation logs (if available)
+      - name: 📥 Install datacontract-cli
+        run: pip install --upgrade datacontract-cli
+
+      - name: 🧪 Run data contract tests
+        run: |
+          mkdir -p reports
+          result=0
+          for contract in data/*.yaml; do
+            name=$(basename "$contract" .yaml)
+            echo "🔍 Testing $contract"
+            if ! datacontract test "$contract" | tee "reports/${name}.log"; then
+              echo "❌ Validation failed for $contract"
+              result=1
+            fi
+          done
+          exit $result
+
+      - name: 📤 Upload validation logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
