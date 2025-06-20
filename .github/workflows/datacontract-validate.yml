@@ -13,27 +13,22 @@ on:
 
 jobs:
   validate:
+    name: Run Data Contract Validation
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 📦 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: ✅ Run DataContract validation
+        uses: datacontract/datacontract-action@v1
         with:
-          python-version: '3.10'
+          contracts: data/*.yaml
+          data: data/*.csv
 
-      - name: Install datacontract-cli
-        run: pip install --upgrade datacontract-cli
-
-      - name: Run data contract tests
-        run: |
-          mkdir -p reports
-          for contract in data/*.yaml; do
-            name=$(basename "$contract" .yaml)
-            echo "🧪 Running datacontract test on $contract"
-            datacontract test "$contract"
-          done
-
-
+      - name: 📤 Upload validation logs (if available)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: datacontract-logs
+          path: reports/
