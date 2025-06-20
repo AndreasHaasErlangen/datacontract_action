@@ -37,10 +37,18 @@ jobs:
           for contract in data/*.yaml; do
             name=$(basename "$contract")
             echo "🔍 Testing $contract"
-            if datacontract test "$contract" > "reports/${name}.log" 2>&1; then
+            
+            # Run the test, direct output to stdout AND tee it to a file
+            if datacontract test "$contract" 2>&1 | tee "reports/${name}.log"; then
               summary+="✅ $name: Passed%0A"
             else
               summary+="❌ $name: Failed (see logs)%0A"
+              
+              # Optional: Add specific error lines to the GitHub step summary as well
+              echo "--- Details for $name (Failed) ---" >> "$GITHUB_STEP_SUMMARY"
+              head -n 20 "reports/${name}.log" >> "$GITHUB_STEP_SUMMARY" # Add first 20 lines of log
+              echo "-----------------------------------" >> "$GITHUB_STEP_SUMMARY"
+
               result=1
             fi
           done
