@@ -27,7 +27,7 @@ jobs:
       - name: Install datacontract-cli
         run: pip install --upgrade datacontract-cli
 
-      - name: Run data contract tests and generate JUnit reports
+      - name: Run data contract tests
         run: |
           mkdir -p reports
           for contract in data/*.yaml; do
