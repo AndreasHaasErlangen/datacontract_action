@@ -53,19 +53,3 @@ jobs:
         with:
           name: datacontract-logs
           path: reports/
-
-      - name: 💬 Comment on Pull Request
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const summary = `${{ steps.test.outputs.summary }}`
-            const prNumber = context.payload.pull_request.number;
-            const body = `🔍 **Data Contract Validation Results**\n\n${summary}\n\n📎 Logs are attached to the [GitHub Actions run](${context.run.html_url})`;
-            await github.rest.issues.createComment({
-              issue_number: prNumber,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
