@@ -10,6 +10,15 @@ on:
       - 'data/**/*.csv'
       - 'data/**/*.yaml'
   workflow_dispatch:
+    inputs:
+      csv_file:
+        description: 'Lade die zu validierende CSV-Datei hier hoch.'
+        required: true
+        type: string
+      contract_yaml:
+        description: 'Optional: Gib den Pfad zur Data Contract YAML-Datei an (z.B. data/mein_contract.yaml). Wenn leer, werden alle .yaml-Dateien im data-Ordner geprüft.'
+        required: false
+        type: string
 
 jobs:
   validate:
@@ -28,45 +37,86 @@ jobs:
       - name: 📥 Install datacontract-cli
         run: pip install --upgrade datacontract-cli
 
+      - name: 📝 Save uploaded CSV and prepare contract path
+        id: prepare_files
+        run: |
+          # Den temporären Pfad der hochgeladenen Datei in eine Variable speichern
+          UPLOADED_CSV_PATH="${{ github.event.inputs.csv_file }}"
+          
+          # Sicherstellen, dass der 'data' Ordner existiert
+          mkdir -p data
+          
+          # Die hochgeladene CSV-Datei in den 'data' Ordner kopieren
+          # Den Dateinamen beibehalten oder einen generischen Namen verwenden
+          cp "$UPLOADED_CSV_PATH" "data/uploaded_data.csv"
+          echo "Die hochgeladene Datei wurde als data/uploaded_data.csv gespeichert."
+
+          # Bestimmen der zu prüfenden Kontrakte
+          CONTRACTS_TO_TEST=""
+          if [[ -n "${{ github.event.inputs.contract_yaml }}" ]]; then
+            # Wenn ein spezifischer Vertrag angegeben wurde
+            SPECIFIC_CONTRACT_PATH="${{ github.event.inputs.contract_yaml }}"
+            if [[ -f "$SPECIFIC_CONTRACT_PATH" ]]; then
+              CONTRACTS_TO_TEST="$SPECIFIC_CONTRACT_PATH"
+            else
+              echo "::error::Der angegebene Data Contract '${SPECIFIC_CONTRACT_PATH}' wurde nicht gefunden."
+              exit 1
+            fi
+          else
+            # Ansonsten alle YAML-Dateien im data-Ordner prüfen
+            CONTRACTS_TO_TEST="data/*.yaml"
+          fi
+          
+          # Den Pfad der zu prüfenden Kontrakte für den nächsten Schritt verfügbar machen
+          echo "contracts_to_test=$CONTRACTS_TO_TEST" >> "$GITHUB_OUTPUT"
+
+
       - name: 🧪 Run data contract tests and collect results
         id: test
         run: |
           mkdir -p reports
           summary=""
           result=0
-          for contract in data/*.yaml; do
+          
+          # Die Variable aus dem vorherigen Schritt verwenden
+          CONTRACTS_TO_TEST_VAR="${{ steps.prepare_files.outputs.contracts_to_test }}"
+
+          for contract in $CONTRACTS_TO_TEST_VAR; do
+            if [[ ! -f "$contract" ]]; then
+              echo "Skipping non-existent contract file: $contract"
+              continue
+            fi
+            
             name=$(basename "$contract")
             echo "🔍 Testing $contract"
+            
+            # WICHTIG: Hier gehen wir davon aus, dass 'datacontract test' die CSV-Datei
+            # im 'data/' Verzeichnis automatisch findet oder der Contract auf diese verweist.
+            # Falls 'datacontract test' einen expliziten Pfad zur CSV benötigt,
+            # müsstest du den Befehl hier anpassen, z.B.
+            # datacontract test "$contract" --data data/uploaded_data.csv (falls das Tool so funktioniert)
             if datacontract test "$contract" > "reports/${name}.log" 2>&1; then
               summary+="✅ $name: Passed%0A"
             else
-              summary+="❌ $name: Failed (see logs)%0A"
+              summary+="❌ $name: Failed (siehe Logs und Fehlermeldungen in reports/${name}.log)%0A"
+              
+              # Optional: Die ersten paar Zeilen des Fehlers direkt im Summary anzeigen
+              echo "--- Fehlerdetails für $name ---" >> "reports/${name}.log"
+              head -n 20 "reports/${name}.log" >> "$GITHUB_STEP_SUMMARY" # Fügt die ersten 20 Zeilen zum Run-Summary hinzu
+              echo "----------------------------" >> "reports/${name}.log"
+
               result=1
             fi
           done
           echo "summary=$summary" >> "$GITHUB_OUTPUT"
+          
+          # Exit mit dem Ergebnis
           exit $result
 
       - name: 📤 Upload validation logs
-        if: always()
+        if: always() # Sicherstellen, dass die Logs immer hochgeladen werden, auch bei Fehlern
         uses: actions/upload-artifact@v4
         with:
           name: datacontract-logs
           path: reports/
-
-      - name: 💬 Comment on Pull Request
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const summary = `${{ steps.test.outputs.summary }}`
-            const prNumber = context.payload.pull_request.number;
-            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const body = `🔍 **Data Contract Validation Results**\n\n${summary}\n\n📎 Logs are attached to the [GitHub Actions run](${runUrl})`;
-            await github.rest.issues.createComment({
-              issue_number: prNumber,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
+          retention-days: 7 # Optional: Logs nach 7 Tagen automatisch löschen
